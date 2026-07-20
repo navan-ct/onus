@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Xcode — per-user state
+xcuserdata/
+*.xcuserstate
+
+# Xcode — build output
+build/
+DerivedData/
+*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+*.xcworkspace/xcshareddata/swiftpm/configuration/
+
+# Swift Package Manager
+.build/
+.swiftpm/
