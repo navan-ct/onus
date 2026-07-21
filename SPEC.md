@@ -21,7 +21,7 @@ The widget's resting state shows only these lists. Everything else — adding, e
 
 - The widget must float above all normal windows, appear on every Space, and remain visible over fullscreen apps. In AppKit terms: an `NSPanel` with an elevated window level (e.g. `.statusBar`) and `collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]`.
 - Interacting with the widget must not steal focus from the app I'm working in. Use a non-activating panel (`.nonactivatingPanel`); note you'll need to override `canBecomeKey` to return `true` on the panel so the add/edit text field can receive typing when needed — but the panel should only take key status during text entry.
-- Anchors to the bottom-right corner of the screen by default (margin size: your call). Handle display/resolution changes gracefully. Draggable is fine but not required.
+- Anchors to the bottom-right corner of the screen by default (margin size: your call). Handle display/resolution changes gracefully. The panel is draggable and remembers where it was moved to across launches, re-clamped onto the visible screen.
 - No title bar or standard window chrome. Rounded, compact, adapts to light and dark mode.
 - Runs as an accessory app (`LSUIElement = true`): no Dock icon. **Include a menu bar status item** — with no Dock icon it's the only sane place for Quit, the launch-at-login toggle, and any other rare actions. Keep its menu tiny.
 
@@ -87,7 +87,7 @@ At local midnight — and on launch/wake when the date has changed, since the Ma
 ## Snooze (behavior is a requirement; bindings and durations are suggestions)
 
 - A global hotkey hides the widget **completely** for a snooze period, then it returns automatically. While snoozed the panel must be ordered out entirely — not transparent, not click-interceptable; it does not exist on screen.
-- Use the `KeyboardShortcuts` Swift package (sindresorhus) — it's actively maintained, sandbox-safe, and needs no special permissions. Per the package's own guidance, don't hard-code a shortcut: expose a small recorder so I set my own. A sensible pre-filled default is fine. The recorder lives in a small Settings window opened from the status-item menu ("Snooze Shortcut…"), not inline in the menu itself — an open menu's event tracking swallows modifier keys, so combos like ⌘H can't be recorded from within the menu.
+- Use the `KeyboardShortcuts` Swift package (sindresorhus) — it's actively maintained, sandbox-safe, and needs no special permissions. Per the package's own guidance, don't hard-code a shortcut: expose a small recorder so I set my own. A sensible pre-filled default is fine. The recorder lives in a small Settings window opened from the status-item menu ("Settings…"), not inline in the menu itself — an open menu's event tracking swallows modifier keys, so combos like ⌘H can't be recorded from within the menu.
 - Default snooze duration ~10 minutes. The hotkey acts as a toggle: pressing it while snoozed brings the widget back immediately (rather than extending the snooze).
 - An optional small snooze control on the widget itself is nice but not required.
 
@@ -97,7 +97,7 @@ At local midnight — and on launch/wake when the date has changed, since the Ma
 
 ## Non-goals
 
-- No notifications, sounds, or badges. No cloud sync or accounts. No due times, priorities, tags, or subtasks. No settings window — the status-item menu covers the few preferences that exist.
+- No notifications, sounds, or badges. No cloud sync or accounts. No due times, priorities, tags, or subtasks. Settings stay minimal: the status-item menu handles the toggles (snooze, launch at login, quit), and a small Settings window — opened from that menu — holds only the snooze-shortcut recorder, which the menu can't host (an open menu's event tracking swallows modifier keys).
 
 ## Tech notes
 

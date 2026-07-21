@@ -150,13 +150,22 @@ final class Store: ObservableObject {
         saveWorkItem?.cancel()
         let snapshot = OnusData(everyDay: everyDay, tasks: tasks, goals: goals, history: history)
         let url = fileURL
-        let work = DispatchWorkItem {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            guard let data = try? encoder.encode(snapshot) else { return }
-            try? data.write(to: url, options: .atomic)
-        }
+        let work = DispatchWorkItem { [weak self] in self?.write(snapshot, to: url) }
         saveWorkItem = work
         DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.4, execute: work)
+    }
+
+    /// Writes any pending changes synchronously. Call before the app terminates.
+    func flush() {
+        saveWorkItem?.cancel()
+        saveWorkItem = nil
+        write(OnusData(everyDay: everyDay, tasks: tasks, goals: goals, history: history), to: fileURL)
+    }
+
+    private nonisolated func write(_ snapshot: OnusData, to url: URL) {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(snapshot) else { return }
+        try? data.write(to: url, options: .atomic)
     }
 }

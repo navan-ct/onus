@@ -7,14 +7,8 @@ enum DayFormat {
         switch diff {
         case ..<0, 0: return "Today"
         case 1: return "Tomorrow"
-        case 2...6:
-            let f = DateFormatter()
-            f.dateFormat = "EEEE"
-            return f.string(from: day.date(cal))
-        default:
-            let f = DateFormatter()
-            f.dateFormat = "MMM d"
-            return f.string(from: day.date(cal))
+        case 2...6: return weekday(day.date(cal))
+        default: return shortMonthDay(day.date(cal))
         }
     }
 
@@ -22,5 +16,15 @@ enum DayFormat {
         let f = DateFormatter()
         f.dateStyle = .medium
         return f.string(from: day.date())
+    }
+
+    static func weekday(_ date: Date) -> String { string(date, "EEEE") }
+    static func shortMonthDay(_ date: Date) -> String { string(date, "MMM d") }
+    static func longMonthDay(_ date: Date) -> String { string(date, "MMMM d") }
+
+    private static func string(_ date: Date, _ format: String) -> String {
+        let f = DateFormatter()
+        f.dateFormat = format
+        return f.string(from: date)
     }
 }

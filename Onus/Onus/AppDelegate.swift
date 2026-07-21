@@ -37,6 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         panel.orderFrontRegardless()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        store.flush()
+    }
+
     // MARK: Panel
 
     private func setupPanel() {
@@ -131,17 +135,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
 
-        let shortcutItem = NSMenuItem(
-            title: "Snooze Shortcut…",
-            action: #selector(openSettings),
+        let snoozeItem = NSMenuItem(
+            title: "Snooze for 10 minutes",
+            action: #selector(toggleSnooze),
             keyEquivalent: "")
-        shortcutItem.target = self
-        menu.addItem(shortcutItem)
+        snoozeItem.target = self
+        snoozeItem.tag = 2
+        menu.addItem(snoozeItem)
 
         menu.addItem(.separator())
 
+        let shortcutItem = NSMenuItem(
+            title: "Settings…",
+            action: #selector(openSettings),
+            keyEquivalent: ",")
+        shortcutItem.target = self
+        menu.addItem(shortcutItem)
+
         let loginItem = NSMenuItem(
-            title: "Launch at Login",
+            title: "Launch at login",
             action: #selector(toggleLaunchAtLogin),
             keyEquivalent: "")
         loginItem.target = self
@@ -162,6 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let window = NSWindow(contentViewController: hosting)
             window.title = "Onus Settings"
             window.styleMask = [.titled, .closable]
+            styleWindowChrome(window)
             window.isReleasedWhenClosed = false
             window.center()
             settingsWindow = window
@@ -174,6 +187,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if let loginItem = menu.item(withTag: 1) {
             loginItem.state = (SMAppService.mainApp.status == .enabled) ? .on : .off
         }
+        if let snoozeItem = menu.item(withTag: 2) {
+            snoozeItem.title = isSnoozed ? "Wake Onus now" : "Snooze for 10 minutes"
+        }
+    }
+
+    private func styleWindowChrome(_ window: NSWindow) {
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.styleMask.insert(.fullSizeContentView)
+        window.isMovableByWindowBackground = true
+        window.backgroundColor = NSColor(Theme.scrim)
     }
 
     // MARK: Launch at login
@@ -206,7 +230,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func toggleSnooze() {
+    @objc private func toggleSnooze() {
         if isSnoozed {
             endSnooze()
         } else {
@@ -269,7 +293,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let window = NSWindow(contentViewController: hosting)
             window.title = "History"
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-            window.setContentSize(NSSize(width: 360, height: 460))
+            styleWindowChrome(window)
+            window.setContentSize(NSSize(width: 380, height: 480))
             window.isReleasedWhenClosed = false
             window.center()
             historyWindow = window

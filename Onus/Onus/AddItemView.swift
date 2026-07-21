@@ -10,6 +10,7 @@ struct EditorView: View {
     @State private var title: String
     @State private var kind: ItemKind
     @State private var day: CalendarDay
+    @State private var showCalendar = false
     @FocusState private var focused: Bool
 
     init(editor: EditorState, onClose: @escaping () -> Void) {
@@ -45,34 +46,53 @@ struct EditorView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            TextField("Add an item…", text: $title)
-                .textFieldStyle(.roundedBorder)
+        VStack(alignment: .leading, spacing: 13) {
+            TextField(isEditing ? "Edit item" : "Write it down", text: $title)
+                .textFieldStyle(.plain)
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.paper)
                 .focused($focused)
                 .onSubmit(commit)
                 .onExitCommand(perform: onClose)
+                .padding(.bottom, 6)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(focused ? Theme.gold : Theme.hairline)
+                        .frame(height: focused ? 1.5 : 1)
+                }
 
             if !isEditing {
-                Picker("", selection: $kind) {
-                    Text("Every day").tag(ItemKind.everyDay)
-                    Text("Dated").tag(ItemKind.task)
-                    Text("Goal").tag(ItemKind.goal)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                kindSelector
             }
 
             if kind == .task {
                 dateControls
             }
 
-            HStack {
+            HStack(spacing: 14) {
                 Spacer()
-                Button("Cancel", action: onClose)
-                    .keyboardShortcut(.cancelAction)
-                Button(isEditing ? "Save" : "Add", action: commit)
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(trimmed.isEmpty)
+                Button(action: onClose) {
+                    Text("Cancel")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Theme.paperDim)
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.cancelAction)
+
+                Button(action: commit) {
+                    Text(isEditing ? "Save" : "Add")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(trimmed.isEmpty ? Theme.paperFaint : Theme.onGold)
+                        .padding(.horizontal, 15)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(trimmed.isEmpty ? Color.white.opacity(0.06) : Theme.gold)
+                        )
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.defaultAction)
+                .disabled(trimmed.isEmpty)
             }
         }
         .onAppear {
@@ -82,27 +102,77 @@ struct EditorView: View {
         .onDisappear { app.resignKey() }
     }
 
-    private var dateControls: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                quickPick("Today", target: .today())
-                quickPick("Tomorrow", target: tomorrow)
-                Spacer()
-                DatePicker("", selection: dateBinding, in: startOfToday..., displayedComponents: .date)
-                    .labelsHidden()
-                    .datePickerStyle(.field)
-            }
-            Text("On \(DayFormat.full(day))")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+    private var kindSelector: some View {
+        HStack(spacing: 18) {
+            kindOption("Every day", .everyDay)
+            kindOption("Dated", .task)
+            kindOption("Goal", .goal)
+            Spacer()
         }
     }
 
-    private func quickPick(_ label: String, target: CalendarDay) -> some View {
-        Button(label) { day = target }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .tint(day == target ? Color.accentColor : Color.secondary)
+    private func kindOption(_ label: String, _ value: ItemKind) -> some View {
+        let selected = kind == value
+        return Button { kind = value } label: {
+            Text(label)
+                .font(.system(size: 12, weight: selected ? .semibold : .regular))
+                .foregroundStyle(selected ? Theme.paper : Theme.paperDim)
+                .overlay(alignment: .bottom) {
+                    Circle()
+                        .fill(Theme.gold)
+                        .frame(width: 4, height: 4)
+                        .offset(y: 6)
+                        .opacity(selected ? 1 : 0)
+                }
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+    }
+
+    private var dateControls: some View {
+        HStack(spacing: 6) {
+            datePill("Today", selected: day == .today()) { day = .today() }
+            datePill("Tomorrow", selected: day == tomorrow) { day = tomorrow }
+            datePill(customLabel, selected: isCustomDay, icon: "calendar") {
+                showCalendar = true
+            }
+            .popover(isPresented: $showCalendar, arrowEdge: .bottom) {
+                DatePicker("", selection: dateBinding, in: startOfToday..., displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .labelsHidden()
+                    .tint(Theme.gold)
+                    .padding(12)
+                    .frame(width: 236)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func datePill(_ label: String, selected: Bool, icon: String? = nil, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                if let icon { Image(systemName: icon).font(.system(size: 9, weight: .medium)) }
+                Text(label)
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(selected ? Theme.onGold : Theme.paperDim)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(
+                Capsule().fill(selected ? Theme.gold : Color.white.opacity(0.07))
+            )
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+    }
+
+    private var customLabel: String {
+        isCustomDay ? DayFormat.shortMonthDay(day.date()) : "Pick"
+    }
+
+    private var isCustomDay: Bool {
+        day != .today() && day != tomorrow
     }
 
     private var tomorrow: CalendarDay {

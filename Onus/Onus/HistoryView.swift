@@ -5,48 +5,87 @@ struct HistoryView: View {
     @State private var showClearConfirm = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+            GoldRule().padding(.horizontal, 22)
+
             if store.history.isEmpty {
                 Spacer()
-                Text("No completed items yet.")
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .center, spacing: 5) {
+                    Text("Nothing settled yet")
+                        .font(Theme.title)
+                        .foregroundStyle(Theme.paper)
+                    Text("Finish something and it rests here.")
+                        .font(Theme.dateSub)
+                        .foregroundStyle(Theme.paperDim)
+                }
+                .frame(maxWidth: .infinity)
                 Spacer()
             } else {
-                List {
-                    ForEach(groupedHistory(), id: \.day) { group in
-                        Section(DayFormat.full(group.day)) {
-                            ForEach(group.entries) { entry in
-                                HistoryRow(entry: entry)
-                                    .contextMenu {
-                                        Button("Delete", role: .destructive) {
-                                            store.deleteHistory(entry)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        ForEach(groupedHistory(), id: \.day) { group in
+                            VStack(alignment: .leading, spacing: 9) {
+                                Text(DayFormat.full(group.day))
+                                    .font(Theme.sectionLabel)
+                                    .tracking(0.4)
+                                    .foregroundStyle(Theme.paperDim)
+                                ForEach(group.entries) { entry in
+                                    HistoryRow(entry: entry)
+                                        .contextMenu {
+                                            Button("Delete", role: .destructive) {
+                                                store.deleteHistory(entry)
+                                            }
                                         }
-                                    }
+                                }
                             }
                         }
                     }
+                    .padding(.horizontal, 22)
+                    .padding(.top, 18)
+                    .padding(.bottom, 20)
                 }
-                .listStyle(.inset)
+                .scrollContentBackground(.hidden)
             }
 
-            Divider()
+            Rectangle().fill(Theme.hairline).frame(height: 1)
             HStack {
                 Spacer()
-                Button("Clear All…") { showClearConfirm = true }
-                    .buttonStyle(.borderless)
-                    .controlSize(.small)
-                    .foregroundStyle(.secondary)
-                    .disabled(store.history.isEmpty)
+                Button(action: { showClearConfirm = true }) {
+                    Text("Clear all")
+                        .font(Theme.sectionLabel)
+                        .tracking(0.4)
+                        .foregroundStyle(Theme.paperDim)
+                }
+                .buttonStyle(.plain)
+                .disabled(store.history.isEmpty)
             }
-            .padding(8)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 12)
         }
-        .frame(minWidth: 320, minHeight: 380)
+        .frame(minWidth: 360, minHeight: 440)
+        .background(InkSurface().ignoresSafeArea())
         .confirmationDialog("Clear all history?", isPresented: $showClearConfirm) {
-            Button("Clear All", role: .destructive) { store.clearHistory() }
+            Button("Clear all", role: .destructive) { store.clearHistory() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This permanently removes every completed item.")
+            Text("This permanently removes every finished item.")
         }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text("Settled")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(Theme.paper)
+            Text("The weight you've set down.")
+                .font(Theme.dateSub)
+                .foregroundStyle(Theme.paperDim)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 22)
+        .padding(.top, 30)
+        .padding(.bottom, 13)
     }
 
     private func groupedHistory() -> [(day: CalendarDay, entries: [HistoryEntry])] {
@@ -61,15 +100,26 @@ private struct HistoryRow: View {
     let entry: HistoryEntry
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: entry.kind == .goal ? "target" : "checkmark.circle.fill")
-                .foregroundStyle(entry.kind == .goal ? Color.secondary : Color.accentColor)
+        HStack(alignment: .top, spacing: 11) {
+            marker.frame(width: 16, height: 18, alignment: .center)
             Text(entry.title)
-            Spacer(minLength: 8)
+                .font(Theme.body)
+                .foregroundStyle(Theme.paper)
+            Spacer(minLength: 10)
             Text(entry.kind == .goal ? "Goal" : "Task")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(Theme.small)
+                .foregroundStyle(Theme.paperFaint)
         }
-        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private var marker: some View {
+        if entry.kind == .goal {
+            Image(systemName: "diamond.fill")
+                .font(.system(size: 8))
+                .foregroundStyle(Theme.gold)
+        } else {
+            Circle().fill(Theme.gold).frame(width: 8, height: 8)
+        }
     }
 }
