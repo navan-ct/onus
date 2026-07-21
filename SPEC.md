@@ -87,8 +87,8 @@ At local midnight — and on launch/wake when the date has changed, since the Ma
 ## Snooze (behavior is a requirement; bindings and durations are suggestions)
 
 - A global hotkey hides the widget **completely** for a snooze period, then it returns automatically. While snoozed the panel must be ordered out entirely — not transparent, not click-interceptable; it does not exist on screen.
-- Use the `KeyboardShortcuts` Swift package (sindresorhus) — it's actively maintained, sandbox-safe, and needs no special permissions. Per the package's own guidance, don't hard-code a shortcut: expose a small recorder (the status-item menu is a fine home for it) so I set my own. A sensible pre-filled default is fine.
-- Default snooze duration ~10 minutes; how re-presses behave (extend, cancel, cycle durations) is your call — keep it simple and tell me what you picked.
+- Use the `KeyboardShortcuts` Swift package (sindresorhus) — it's actively maintained, sandbox-safe, and needs no special permissions. Per the package's own guidance, don't hard-code a shortcut: expose a small recorder so I set my own. A sensible pre-filled default is fine. The recorder lives in a small Settings window opened from the status-item menu ("Snooze Shortcut…"), not inline in the menu itself — an open menu's event tracking swallows modifier keys, so combos like ⌘H can't be recorded from within the menu.
+- Default snooze duration ~10 minutes. The hotkey acts as a toggle: pressing it while snoozed brings the widget back immediately (rather than extending the snooze).
 - An optional small snooze control on the widget itself is nice but not required.
 
 ## Launch at login (requirement)

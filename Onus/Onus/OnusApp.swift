@@ -1,17 +1,12 @@
-//
-//  OnusApp.swift
-//  Onus
-//
-//  Created by Navaneeth CT on 21/07/26.
-//
-
 import SwiftUI
 
 @main
 struct OnusApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        Settings {
+            EmptyView()
         }
     }
 }
